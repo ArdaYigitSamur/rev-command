@@ -9,33 +9,44 @@ char **read(FILE *fp, char **lines, int *lSize){
     int cap = INITCAP;
     *lSize = 0;
     lines=(char **)malloc(sizeof(char *)*cap);
-    lines[*lSize]=malloc(BUFSIZE);
-    while(fgets(lines[*lSize],BUFSIZE,fp)!=NULL){
+    char *str=malloc(BUFSIZE);
+    while(fgets(str,BUFSIZE,fp)!=NULL){
+        char *eof=strchr(str,'D' - 'A' + 1);
+        if(eof)
+            *eof=0;
         if(*lSize==cap){
             cap*=2;
             lines=realloc(lines,sizeof(char *)*cap);
         }
-        (*lSize)++;
-        lines[*lSize]=malloc(BUFSIZE);
+        lines[(*lSize)++]=str;
+        if(eof)
+            return lines;
+        str=malloc(BUFSIZE);
     }
-    free(lines[*lSize]);
+    free(str);
     return lines;
 }
 
-void write(char **lines, int *lSize){
+void write(char **lines, int lSize){
     int len=0;
-    for(int l=0;l<(*lSize);l++){
+    for(int l=lSize-1;l>=0;l--){
+        printf("%d ",l+1 );
         len = strlen(lines[l])-1;
+        lines[l][len-1]='\0';
         for(int i=len-1;i>=0;i--)
             printf("%c",lines[l][i]);
         printf("\n");
     }
 }
 
-void reverse(FILE *fp, char **lines){
+char **reverse(FILE *fp, char **lines){
     int lSize;
     lines=read(fp,lines,&lSize);
-    write(lines,&lSize);
+    write(lines,lSize);
+    for (int i = 0; i < lSize; i++) {
+        free(lines[i]);
+    }
+    return lines;
 }
 
 int main(int argc, char *argv[])
@@ -49,7 +60,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     char **lines = NULL;
-    reverse(filep, lines);
+    lines=reverse(filep, lines);
     fclose(filep);
     free(lines);
     return 0;
